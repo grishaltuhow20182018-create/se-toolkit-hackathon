@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete as sql_delete
 from typing import List
 from app.core.database import get_db
 from app.models.models import Playlist, PlaylistTrack, Track
@@ -80,6 +80,23 @@ async def add_track_to_playlist(
     return {"message": "Track added to playlist"}
 
 
+@router.delete("/{playlist_id}/tracks/{track_id}", status_code=204)
+async def remove_track_from_playlist(
+    playlist_id: str,
+    track_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """Remove a track from a playlist."""
+    await db.execute(
+        sql_delete(PlaylistTrack).where(
+            PlaylistTrack.playlist_id == playlist_id,
+            PlaylistTrack.track_id == track_id
+        )
+    )
+    await db.flush()
+    return None
+
+
 @router.delete("/{playlist_id}", status_code=204)
 async def delete_playlist(playlist_id: str, db: AsyncSession = Depends(get_db)):
     """Delete a playlist."""
@@ -87,9 +104,5 @@ async def delete_playlist(playlist_id: str, db: AsyncSession = Depends(get_db)):
     if not result.scalar_one_or_none():
         raise HTTPException(status_code=404, detail="Playlist not found")
     
-    await db.execute(
-        select(Playlist).where(Playlist.id == playlist_id)
-    )
-    from sqlalchemy import delete as sql_delete
     await db.execute(sql_delete(Playlist).where(Playlist.id == playlist_id))
     await db.flush()

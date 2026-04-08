@@ -23,6 +23,8 @@ export const playlistsAPI = {
   create: (data) => api.post('/playlists/', data),
   addTrack: (playlistId, trackId, position) => 
     api.post(`/playlists/${playlistId}/tracks/${trackId}`, null, { params: { position } }),
+  removeTrack: (playlistId, trackId) => 
+    api.delete(`/playlists/${playlistId}/tracks/${trackId}`),
   delete: (id) => api.delete(`/playlists/${id}`),
 };
 
