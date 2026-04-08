@@ -8,6 +8,13 @@ export default function RegisterPage({ onLogin }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const parseError = (err) => {
+    const detail = err.response?.data?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return detail.map(e => e.msg || e.detail).join(', ');
+    return 'Registration failed. Please try again.';
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -20,7 +27,7 @@ export default function RegisterPage({ onLogin }) {
       localStorage.setItem('user', JSON.stringify(user));
       onLogin(user);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Registration failed');
+      setError(parseError(err));
     } finally {
       setLoading(false);
     }
@@ -65,7 +72,7 @@ export default function RegisterPage({ onLogin }) {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label className="text-sm text-secondary">Password</label>
+            <label className="text-sm text-secondary">Password (min 6 characters)</label>
             <input
               type="password"
               value={password}
@@ -83,7 +90,7 @@ export default function RegisterPage({ onLogin }) {
 
         <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
           Already have an account?{' '}
-          <a href="/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+          <a href="#/login" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
             Sign In
           </a>
         </p>

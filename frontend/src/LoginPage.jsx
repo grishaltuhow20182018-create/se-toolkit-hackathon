@@ -19,7 +19,14 @@ export default function LoginPage({ onLogin }) {
       localStorage.setItem('user', JSON.stringify(user));
       onLogin(user);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Login failed');
+      const detail = err.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setError(detail);
+      } else if (Array.isArray(detail)) {
+        setError(detail.map(e => e.msg || e.detail).join(', '));
+      } else {
+        setError('Invalid username or password');
+      }
     } finally {
       setLoading(false);
     }
@@ -69,7 +76,7 @@ export default function LoginPage({ onLogin }) {
 
         <p style={{ textAlign: 'center', marginTop: '1.5rem', color: 'var(--text-secondary)' }}>
           Don't have an account?{' '}
-          <a href="/register" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
+          <a href="#/register" style={{ color: 'var(--primary)', fontWeight: 'bold' }}>
             Register
           </a>
         </p>
