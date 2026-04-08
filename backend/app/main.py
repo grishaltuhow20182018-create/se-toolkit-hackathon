@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import engine, Base
-from app.api import tracks, playlists, setlists, ai
+from app.api import tracks, playlists, setlists, ai, auth as auth_api
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,8 +19,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="DJ Setlist AI",
-    description="AI-powered DJ setlist generator with seamless track matching",
-    version="0.1.0",
+    description="AI-powered DJ setlist generator with user authentication",
+    version="0.2.0",
     lifespan=lifespan,
 )
 
@@ -34,6 +34,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(auth_api.router, prefix="/api/auth", tags=["auth"])
 app.include_router(tracks.router, prefix="/api/tracks", tags=["tracks"])
 app.include_router(playlists.router, prefix="/api/playlists", tags=["playlists"])
 app.include_router(setlists.router, prefix="/api/setlists", tags=["setlists"])

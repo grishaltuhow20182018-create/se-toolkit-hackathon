@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     LLM_API_BASE_URL: str = "http://localhost:8080/v1"
     LLM_API_MODEL: str = "coder-model"
 
+    # JWT Auth
+    JWT_SECRET_KEY: str = "your-secret-key-change-in-production"
+    JWT_ALGORITHM: str = "HS256"
+    JWT_EXPIRE_MINUTES: int = 10080  # 7 days
+
     # CORS
     CORS_ORIGINS: List[str] = ["http://localhost:3000"]
 

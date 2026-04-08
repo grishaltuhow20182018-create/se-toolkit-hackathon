@@ -1,8 +1,35 @@
 """Pydantic schemas for API requests/responses."""
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 from datetime import datetime
+
+
+# Auth schemas
+class UserRegister(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
+    email: str = Field(..., min_length=5)
+    password: str = Field(..., min_length=6)
+
+
+class UserLogin(BaseModel):
+    username: str = Field(...)
+    password: str = Field(...)
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: dict
+
+
+class UserResponse(BaseModel):
+    id: str
+    username: str
+    email: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 # Track schemas
@@ -40,6 +67,7 @@ class TrackUpdate(BaseModel):
 
 class TrackResponse(TrackBase):
     id: str
+    user_id: str
     file_size_bytes: Optional[int] = None
     created_at: datetime
     updated_at: datetime
