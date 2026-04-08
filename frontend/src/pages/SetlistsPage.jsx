@@ -35,9 +35,18 @@ export default function SetlistsPage() {
     }
     setSelectedSetlist(setlist);
     
-    // Get tracks from the track_order
-    const trackIds = setlist.track_order || [];
-    const tracks = allTracks.filter(track => trackIds.includes(track.id));
+    // track_order is an array of objects: [{track_id, position, transition_notes}, ...]
+    // Extract track IDs and sort by position
+    const trackOrder = setlist.track_order || [];
+    const sortedTrackIds = trackOrder
+      .sort((a, b) => (a.position || 0) - (b.position || 0))
+      .map(item => item.track_id || item);
+    
+    // Match tracks by ID
+    const tracks = sortedTrackIds
+      .map(id => allTracks.find(t => t.id === id))
+      .filter(Boolean);
+    
     setSetlistTracks(tracks);
   };
 
@@ -113,7 +122,7 @@ export default function SetlistsPage() {
                         <div>
                           <strong>{track.title}</strong> - {track.artist}
                           <div className="text-sm text-secondary">
-                            {track.bpm} BPM | {track.key} | Energy: {track.energy}/10 | {track.genre}
+                            {track.bpm} BPM | {track.key} | Energy: {track.energy_level}/10 | {track.genre}
                           </div>
                         </div>
                       </div>
