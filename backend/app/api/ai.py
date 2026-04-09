@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, or_
 from app.core.database import get_db
 from app.models.models import Track, Playlist, Setlist, User, PlaylistTrack
 from app.schemas.schemas import (
@@ -15,6 +15,8 @@ from app.schemas.schemas import (
 )
 from app.agents.setlist_agent import generate_setlist_with_ai, recommend_next_track
 from app.core.auth import get_current_user
+
+SYSTEM_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 router = APIRouter()
 
@@ -37,10 +39,15 @@ async def generate_setlist(
         )
         tracks = pt_result.scalars().all()
     elif request.track_ids:
-        result = await db.execute(select(Track).where(Track.id.in_(request.track_ids), Track.user_id == current_user.id))
+        result = await db.execute(select(Track).where(Track.id.in_(request.track_ids)))
         tracks = result.scalars().all()
     else:
-        result = await db.execute(select(Track).where(Track.user_id == current_user.id).limit(100))
+        # Get user's tracks + shared tracks
+        result = await db.execute(
+            select(Track)
+            .where(or_(Track.user_id == current_user.id, Track.user_id == SYSTEM_USER_ID))
+            .limit(200)
+        )
         tracks = result.scalars().all()
 
     if not tracks:
@@ -81,7 +88,7 @@ async def get_next_track_recommendation(
     current_user: User = Depends(get_current_user),
 ):
     """Get AI recommendation for the next track to play."""
-    current_result = await db.execute(select(Track).where(Track.id == request.current_track_id, Track.user_id == current_user.id))
+    current_result = await db.execute(select(Track).where(Track.id == request.current_track_id))
     current_track = current_result.scalar_one_or_none()
     if not current_track:
         raise HTTPException(status_code=404, detail="Current track not found")
@@ -96,10 +103,14 @@ async def get_next_track_recommendation(
         )
         available_tracks = pt_result.scalars().all()
     elif request.available_track_ids:
-        result = await db.execute(select(Track).where(Track.id.in_(request.available_track_ids), Track.user_id == current_user.id))
+        result = await db.execute(select(Track).where(Track.id.in_(request.available_track_ids)))
         available_tracks = result.scalars().all()
     else:
-        result = await db.execute(select(Track).where(Track.user_id == current_user.id).limit(100))
+        result = await db.execute(
+            select(Track)
+            .where(or_(Track.user_id == current_user.id, Track.user_id == SYSTEM_USER_ID))
+            .limit(200)
+        )
         available_tracks = result.scalars().all()
 
     available_tracks = [t for t in available_tracks if t.id != request.current_track_id]
